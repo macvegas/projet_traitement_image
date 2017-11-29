@@ -1,0 +1,7 @@
+﻿  Building Custom Rule C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/CMakeLists.txt
+  CMake does not need to re-run because C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/generated/CMakeFiles/generate.stamp is up-to-date.
+  histogram.cpp
+  main_test_opencv.cpp
+  Génération de code en cours...
+  my_project.vcxproj -> C:\Users\sbeaulie\Desktop\Projet OpenCV-CMake\generated\bin\Debug\my_project.exe
+  my_project.vcxproj -> C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/generated/bin/Debug/my_project.pdb (Full PDB)

@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\sbeaulie\Desktop\Projet OpenCV-CMake\src\histogram.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\sbeaulie\Desktop\Projet OpenCV-CMake\src\main_test_opencv.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\sbeaulie\Desktop\Projet OpenCV-CMake\include\histogram.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\sbeaulie\Desktop\Projet OpenCV-CMake\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Program Files\OpenCV_3.3.1\build\include" />
+    <None Include="C:\Program Files\OpenCV_3.3.1\build\include\opencv" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{9EB31D03-B237-3E8C-BEB3-45F1697C53F4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{24B4DDA4-BCEF-3F34-B5C6-A256FE792916}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
