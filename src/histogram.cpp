@@ -25,7 +25,20 @@ void computeHistogram(const string& histTitle,const Mat& img){
 	if(numChannels==3) split(img,channels);
 	else channels.push_back(img);
 
-	threshold(channels[1], channels[1], 128.0, 128.0, THRESH_BINARY);
+
+	//Seuillage
+	//threshold(channels[1], channels[1], 128.0, 128.0, THRESH_BINARY);
+
+	//Region of interest
+
+	// Setup a rectangle to define your region of interest
+	cv::Rect myROI(10, 10, 100, 100);
+
+	// Crop the full image to that image contained by the rectangle myROI
+	// Note that this doesn't copy the data
+	cv::Mat croppedImage = img(myROI);
+	imshow("image découpée", croppedImage);
+	imwrite("C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/img.png", croppedImage);
 
 	// COMPUTE
 	int zero=0;
