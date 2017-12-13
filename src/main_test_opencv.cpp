@@ -23,18 +23,19 @@ static void help()
 		<< "\nA trackbar is put up which controls the contour level from -3 to 3\n"
 		<< endl;
 }
-const int w = 500;
+cv::Size w;
 int levels = 3;
 vector<vector<Point> > contours;
 vector<Vec4i> hierarchy;
 static void on_trackbar(int, void*)
 {
-	Mat cnt_img = Mat::zeros(w, w, CV_8UC3);
+	Mat cnt_img = Mat::zeros(w, CV_8UC3);
 	int _levels = levels - 3;
 	drawContours(cnt_img, contours, _levels <= 0 ? 3 : -1, Scalar(128, 255, 255),
 		3, LINE_AA, hierarchy, std::abs(_levels));
 	imshow("contours", cnt_img);
 }
+/*
 int main(int argc, char** argv)
 {
 	cv::CommandLineParser parser(argc, argv, "{help h||}");
@@ -49,6 +50,8 @@ int main(int argc, char** argv)
 
 	//Grayscale matrix
 	cv::Mat grayscaleMat(img2.size(), CV_8U);
+
+	w = img2.size();
 
 	//Convert BGR to Gray
 	cv::cvtColor(img2, grayscaleMat, CV_BGR2GRAY);
@@ -91,9 +94,10 @@ int main(int argc, char** argv)
 		ellipse(img, Point(dx + 150, dy + 150), Size(40, 10), 0, 0, 360, black, -1, 8, 0);
 		ellipse(img, Point(dx + 27, dy + 100), Size(20, 35), 0, 0, 360, white, -1, 8, 0);
 		ellipse(img, Point(dx + 273, dy + 100), Size(20, 35), 0, 0, 360, white, -1, 8, 0);
-	}*/
+	}
 	//show the faces
-	namedWindow("image", 1);
+	namedWindow("image", WINDOW_NORMAL);
+	//cv::resizeWindow("image", , HEIGHT);
 	imshow("image", binaryMat);
 	//Extract the contours so that
 	vector<vector<Point> > contours0;
@@ -101,9 +105,10 @@ int main(int argc, char** argv)
 	contours.resize(contours0.size());
 	for (size_t k = 0; k < contours0.size(); k++)
 		approxPolyDP(Mat(contours0[k]), contours[k], 3, true);
-	namedWindow("contours", 1);
+
+	namedWindow("contours", WINDOW_NORMAL);
 	createTrackbar("levels+3", "contours", &levels, 7, on_trackbar);
 	on_trackbar(0, 0);
 	waitKey();
 	return 0;
-}
+}*/

@@ -319,6 +319,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClCompile Include="C:\Users\sbeaulie\Desktop\Projet OpenCV-CMake\src\histogram.cpp" />
     <ClCompile Include="C:\Users\sbeaulie\Desktop\Projet OpenCV-CMake\src\main_test_opencv.cpp" />
+    <ClCompile Include="squares.cpp" />
     <ClInclude Include="C:\Users\sbeaulie\Desktop\Projet OpenCV-CMake\include\histogram.hpp" />
     <None Include="C:\Program Files\OpenCV_3.3.1\build\include" />
     <None Include="C:\Program Files\OpenCV_3.3.1\build\include\opencv" />
