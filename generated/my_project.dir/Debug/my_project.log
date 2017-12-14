@@ -1,7 +1,5 @@
-﻿  Building Custom Rule C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/CMakeLists.txt
-  CMake does not need to re-run because C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/generated/CMakeFiles/generate.stamp is up-to-date.
-  histogram.cpp
-  main_test_opencv.cpp
-  Génération de code en cours...
+﻿  squares.cpp
+squares.cpp(198): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586.0\ucrt\string.h(129): note: voir la déclaration de 'strcpy'
   my_project.vcxproj -> C:\Users\sbeaulie\Desktop\Projet OpenCV-CMake\generated\bin\Debug\my_project.exe
   my_project.vcxproj -> C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/generated/bin/Debug/my_project.pdb (Full PDB)

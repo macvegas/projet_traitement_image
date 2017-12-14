@@ -7,9 +7,11 @@
 #include "opencv2/highgui/highgui.hpp"
 
 #include <iostream>
+#include <fstream>
 #include <math.h>
 #include <string>
 #include <cstdio>
+#include <numeric>
 
 using namespace cv;
 using namespace std;
@@ -149,37 +151,49 @@ static void drawSquares(Mat& image, const vector<vector<Point> >& squares)
 	imshow(wndname, image);
 }
 
+typedef vector<Point> square_t;
+
+
+bool compare_points(Point& pointA, Point& pointB, float proximity_tolerance) {
+	if (pointA.x < pointB.x - proximity_tolerance) return true;
+	if (pointA.x > pointB.x + proximity_tolerance) return false;
+	if (pointA.y < pointB.y - proximity_tolerance) return true;
+	return false;
+}
+
+
+bool compare_square_t(square_t& a, square_t& b) {
+	Point pointA = a[0], pointB = b[0];
+	return compare_points(pointA, pointB, 50);
+}
+
+int upperLeft(square_t& sq) {
+	int idx = 0;
+	Point min = sq[0];
+	for (int i = 1; i < sq.size(); i++) {
+		if (sq[i].x < min.x && abs(sq[i].y - min.y) < 5 ) {
+			min = sq[i];
+			idx = i;
+		}
+	}
+	return idx;
+}
+
+bool squaresOverlap(square_t& a, square_t& b, float proximity_tolerance) {
+	Point pointA = a[0], pointB = b[0];
+	return abs(pointB.x - pointA.x) < 160 && abs(pointB.y - pointA.y) < 320;
+	/*
+	bool proxX = (pointB.x > pointA.x - proximity_tolerance && pointB.x < pointA.x + proximity_tolerance);
+	bool proxY = (pointB.y > pointA.y - proximity_tolerance && pointB.y < pointA.y + proximity_tolerance);
+	return proxX && proxY;
+*/}
 
 int main(int /*argc*/, char** /*argv*/)
 {
-	const string numero = "02110";
+	const string numero = "03003";
 	const string imgPath = "c:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images";
 	string alt = imgPath + "/" + numero + ".png";
 
-	/*
-	Mat img2 = imread(alt);
-
-	//Grayscale matrix
-	cv::Mat grayscaleMat(img2.size(), CV_8U);
-
-	//Convert BGR to Gray
-	cv::cvtColor(img2, grayscaleMat, CV_BGR2GRAY);
-
-	//Binary image
-	cv::Mat binaryMat(grayscaleMat.size(), grayscaleMat.type());
-
-	//Apply thresholding
-	cv::threshold(grayscaleMat, binaryMat, 100, 255, cv::THRESH_BINARY);
-
-	string alt2 = imgPath + "/B" + numero + ".png";
-	char * cstr = new char[alt2.length() + 1];
-	std::strcpy(cstr, alt2.c_str());
-
-	imwrite(alt2, binaryMat);
-
-	namedWindow("image", WINDOW_NORMAL);
-	imshow("image", binaryMat);
-	*/
 	char * cstr = new char[alt.length() + 1];
 	std::strcpy(cstr, alt.c_str());
 
@@ -187,7 +201,7 @@ int main(int /*argc*/, char** /*argv*/)
 	
 	help();
 	namedWindow(wndname, WINDOW_NORMAL);
-	vector<vector<Point> > squares;
+	vector<square_t> squares;
 
 	for (int i = 0; names[i] != 0; i++)
 	{
@@ -199,7 +213,113 @@ int main(int /*argc*/, char** /*argv*/)
 		}
 
 		findSquares(image, squares);
-		drawSquares(image, squares);
+	
+
+		vector<square_t> squaresBis;
+		for (int i = 0; i < squares.size(); i++)
+		{
+			//def des points
+			Point p1 = squares[i][0];
+			Point p2= squares[i][1];
+			Point p3 = squares[i][2];
+			Point p4 = squares[i][3];
+
+			//calcul de taille du carré
+			int distancex = (p2.x - p1.x ) ^ 2;
+			int distancey = (p2.y - p1.y) ^ 2;
+
+			double calcdistance = sqrt(abs(distancex - distancey));
+			
+
+			if (calcdistance > 15.5 && calcdistance<17) {
+				vector<Point> points;
+				points.push_back(p1);
+				points.push_back(p2);
+				points.push_back(p3);
+				points.push_back(p4);
+				squaresBis.push_back(points);
+			}
+		}
+
+		ofstream myfile;
+		myfile.open("C:/Users/sbeaulie/Desktop/example.txt");
+		for (auto sq : squaresBis) {
+			myfile << upperLeft(sq) << " " << sq << endl << endl;
+		}
+		myfile.close();
+
+		for (auto sq : squaresBis) {
+			std::rotate(sq.begin(), sq.begin() + upperLeft(sq), sq.end());
+		}
+
+		std::sort(squaresBis.begin(), squaresBis.end(), compare_square_t);
+
+		vector<square_t> filtered;
+		for (auto sq : squaresBis) {
+			if (filtered.size() == 0 || !squaresOverlap(filtered[filtered.size() -1], sq, 150)) {
+				filtered.push_back(sq);
+			}
+		}
+		/*
+		ofstream myfile;
+		myfile.open("C:/Users/sbeaulie/Desktop/example.txt");
+		for (int i = 0; i < filtered.size();i++) {
+			if (i % 7 == 0) myfile << endl;
+			myfile << filtered[i] << endl;
+		}
+		myfile.close();
+
+		*/
+
+		cout << filtered.size()<< endl;
+
+		drawSquares(image, filtered);
+		/*
+		//Trier les carrés par lignes 
+		vector<vector<Point> > Ligne1;
+		vector<vector<Point> > Ligne2;
+		vector<vector<Point> > Ligne3;
+		vector<vector<Point> > Ligne4;
+		vector<vector<Point> > Ligne5;
+		vector<vector<Point> > Ligne6;
+		vector<vector<Point> > Ligne7;
+
+		int nbLigne = 7;
+		int tailleLigne = 5;
+		for (int i = 0; i < nbLigne; i++)
+		{
+			
+			for (int k = 0; k < 5; k++) {
+				//def des points
+				Point p1 = filtered[(i*tailleLigne) +k][0];
+				Point p2 = filtered[(i*tailleLigne) +k][1];
+				Point p3 = filtered[(i*tailleLigne) +k][2];
+				Point p4 = filtered[(i*tailleLigne) +k][3];
+
+				vector<Point> points;
+				points.push_back(p1);
+				points.push_back(p2);
+				points.push_back(p3);
+				points.push_back(p4);
+
+				switch (i) {
+				case 0: Ligne1.push_back(points); break;
+				case 1: Ligne2.push_back(points); break;
+				case 2: Ligne3.push_back(points); break;
+				case 3: Ligne4.push_back(points); break;
+				case 4: Ligne5.push_back(points); break;
+				case 5: Ligne6.push_back(points); break;
+				case 6: Ligne7.push_back(points); break;
+
+				}
+			}
+		}
+
+		drawSquares(image, Ligne2);
+
+		*/
+		
+
 		//imwrite( "out", image );
 		int c = waitKey();
 		if ((char)c == 27)
