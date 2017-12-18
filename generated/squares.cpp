@@ -339,26 +339,27 @@ string path_template17 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/t
 Mat large = imread(path_template17);
 
 
-void whatSymbols(Mat source) {
+string whatSymbols(Mat source) {
 
-	double minResult=1.0;
+	double maxResult=0.0;
 	string symbolName;
 	int indice = 0;
 	// Symbole le plus ressemblant
 	for (int i = 0; i < base.size();i++) {
 		Mat result;
-		matchTemplate(base[i], source, result, TM_CCOEFF_NORMED);
+		matchTemplate(source, base[i], result, CV_TM_CCOEFF_NORMED);
 		//permet la récupération du point d'intérêt (haut a gauche) le plus probable
 		double min, max;
 		Point locationMin;
 		Point locationMax;
 		minMaxLoc(result, &min, &max, &locationMin, &locationMax);
-		cout << min << endl;
-		if (max<minResult) {
-			minResult = max;
+
+		if (max>maxResult) {
+			maxResult = max;
 			indice = i;
 		}
 	}
+
 
 	switch (indice) {
 	case 0: symbolName = "accident"; break;
@@ -379,10 +380,43 @@ void whatSymbols(Mat source) {
 
 	// taille de l'image
 
-	cout << symbolName << endl;
+	double maxResult1 = 0.0;
+	string symbolTaille;
+	int couleur= 0;
+	// Symbole le plus ressemblant
+	for (int i = 0; i < 3; i++) {
+		Mat result;
+		Mat choix;
+		if (i == 0) {
+			choix = small;
+		}
+		else if (i == 1) {
+			choix = medium;
+		}
+		else {
+			choix = large;
+		}
+		matchTemplate(source, choix, result, CV_TM_CCOEFF_NORMED);
 
+		//permet la récupération du point d'intérêt (haut a gauche) le plus probable
+		double min, max;
+		Point locationMin;
+		Point locationMax;
+		minMaxLoc(result, &min, &max, &locationMin, &locationMax);
+		cout << max << endl;
+		if (max>maxResult1) {
+			maxResult1 = max;
+			couleur= i;
+		}
+	}
+	switch (couleur) {
+	case 0: symbolTaille = "small"; break;
+	case 1: symbolTaille = "medium";  break;
+	case 2: symbolTaille = "large"; break;
 
-
+	}
+	
+	return symbolName + symbolTaille;
 
 }
 
@@ -453,30 +487,30 @@ int main(int /*argc*/, char** /*argv*/)
 		
 		auto lignes = groupByRow(filtered);
 
-		drawSquares(image, lignes[1], Scalar(0, 255, 0));
+		drawSquares(image, lignes[2], Scalar(0, 255, 0));
 		
 
-	//	for (int k = 0; k < lignes.size(); k++) {
+		for (int k = 0; k < lignes.size(); k++) {
 			//Select interest zone 
 			Mat source = imread(alt);
-			Mat subImage(source, Rect(0, lignes[1][0][0].y, 600, 350));
-			namedWindow("substrat", WINDOW_NORMAL);
-			imshow("substrat", subImage);
+			Mat subImage(source, Rect(0, lignes[k][0][0].y, 600, 350));
 
-		
-			whatSymbols(subImage);
+			string name = whatSymbols(subImage);
+			cout << name << numero << endl;
+			string numberRow = to_string(k+1);
+
+			for (int u = 0; u < lignes[k].size(); u++) {
+				string numberColunm = to_string(u+1);
+				//Enregistrer chaqueCarre
+				//Il faudrait transformer le vecteur de point en mat 
+				//Peutêtre calculer un barycentre puis créer une image avec le constructeur utilisé ci-dessus
+				//imwrite( "out", lignes[k][u]);
+			}
 			
-
-	//	}
+		}
 		
 
-
 		
-		
-
-
-
-		//imwrite( "out", image );
 		int c = waitKey();
 		if ((char)c == 27)
 			break;
@@ -485,3 +519,9 @@ int main(int /*argc*/, char** /*argv*/)
 	return 0;
 }
 
+/*
+Problèmes : 
+-Carrés en trop 
+-Récupérer numéro de page 
+-Peutêtre une lignes dans "lignes" de trop 
+*/
