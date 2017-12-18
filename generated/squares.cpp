@@ -12,6 +12,7 @@
 #include <string>
 #include <cstdio>
 #include <numeric>
+#define GET_NAME(variable) (#variable)
 
 using namespace cv;
 using namespace std;
@@ -268,22 +269,144 @@ vector<vector<square_t>> groupByRow(vector<square_t>& squares) {
 	currentRow.push_back(squares[0]);
 	for (int i = 1; i < squares.size(); i++) {
 		cout << "i: " << i << endl;
-		if (!areSameRow(squares[i], squares[i - 1], 150)) {
+		if (!areSameRow(squares[i], squares[i - 1], 160)) {
 			cout << "changeRow " << i << endl;
 			lignes.push_back(currentRow);
 			currentRow = vector<square_t>();
 		}
 		currentRow.push_back(squares[i]);
 	}
+	lignes.push_back(currentRow);
 	return lignes;
 }
 
 
+
+
+//charge la base de template
+static vector<Mat> base;
+
+string path_template = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/accident.png";
+Mat accident = imread(path_template);
+
+string path_template2 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/bomb.png";
+Mat bomb = imread(path_template2);
+
+string path_template3 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/car.png";
+Mat car = imread(path_template3);
+
+string path_template4 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/casualty.png";
+Mat casualty = imread(path_template4);
+
+string path_template5 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/electricity.png";
+Mat electricity = imread(path_template5);
+
+string path_template6 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/fire.png";
+Mat fire = imread(path_template6);
+
+string path_template7 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/fireBrigade.png";
+Mat fireBrigade = imread(path_template7);
+
+string path_template8 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/flood.png";
+Mat flood = imread(path_template8);
+
+string path_template9 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/gas.png";
+Mat gas = imread(path_template9);
+
+string path_template10 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/injury.png";
+Mat injury = imread(path_template10);
+
+string path_template11 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/paramedics.png";
+Mat paramedics = imread(path_template11);
+
+string path_template12 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/person.png";
+Mat person = imread(path_template12);
+
+string path_template13 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/police.png";
+Mat police = imread(path_template13);
+
+string path_template14 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/roadBlock.png";
+Mat roadBlock = imread(path_template14);
+
+
+string path_template15 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/small.png";
+Mat small = imread(path_template15);
+
+string path_template16 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/medium.png";
+Mat medium = imread(path_template16);
+
+string path_template17 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/large.png";
+Mat large = imread(path_template17);
+
+
+void whatSymbols(Mat source) {
+
+	double minResult=1.0;
+	string symbolName;
+	int indice = 0;
+	// Symbole le plus ressemblant
+	for (int i = 0; i < base.size();i++) {
+		Mat result;
+		matchTemplate(base[i], source, result, TM_CCOEFF_NORMED);
+		//permet la récupération du point d'intérêt (haut a gauche) le plus probable
+		double min, max;
+		Point locationMin;
+		Point locationMax;
+		minMaxLoc(result, &min, &max, &locationMin, &locationMax);
+		cout << min << endl;
+		if (max<minResult) {
+			minResult = max;
+			indice = i;
+		}
+	}
+
+	switch (indice) {
+	case 0: symbolName = "accident"; break;
+	case 1: symbolName = "bomb"; break;
+	case 2: symbolName = "car"; break;
+	case 3: symbolName = "casualty"; break;
+	case 4: symbolName = "electricity"; break;
+	case 5: symbolName = "fire"; break;
+	case 6: symbolName = "fireBrigade"; break;
+	case 7: symbolName = "flood"; break;
+	case 8: symbolName = "gas"; break;
+	case 9: symbolName = "injury"; break;
+	case 10: symbolName = "paramedics"; break;
+	case 11: symbolName = "person"; break;
+	case 12: symbolName = "police"; break;
+	case 13: symbolName = "roadBlock"; break;
+	}
+
+	// taille de l'image
+
+	cout << symbolName << endl;
+
+
+
+
+}
+
 int main(int /*argc*/, char** /*argv*/)
 {
-	const string numero = "00104";
+	const string numero = "00220";
 	const string imgPath = "c:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images";
 	string alt = imgPath + "/" + numero + ".png";
+
+	//Remplissage du vecteur base
+	base.push_back(accident);
+	base.push_back(bomb);
+	base.push_back(car);
+	base.push_back(casualty);
+	base.push_back(electricity);
+	base.push_back(fire);
+	base.push_back(fireBrigade);
+	base.push_back(flood);
+	base.push_back(gas);
+	base.push_back(injury);
+	base.push_back(paramedics);
+	base.push_back(person);
+	base.push_back(police);
+	base.push_back(roadBlock);
 
 	char * cstr = new char[alt.length() + 1];
 	std::strcpy(cstr, alt.c_str());
@@ -330,9 +453,28 @@ int main(int /*argc*/, char** /*argv*/)
 		
 		auto lignes = groupByRow(filtered);
 
-		drawSquares(image, lignes[3], Scalar(0, 255, 0));
+		drawSquares(image, lignes[1], Scalar(0, 255, 0));
+		
+
+	//	for (int k = 0; k < lignes.size(); k++) {
+			//Select interest zone 
+			Mat source = imread(alt);
+			Mat subImage(source, Rect(0, lignes[1][0][0].y, 600, 350));
+			namedWindow("substrat", WINDOW_NORMAL);
+			imshow("substrat", subImage);
+
+		
+			whatSymbols(subImage);
+			
+
+	//	}
+		
+
+
 		
 		
+
+
 
 		//imwrite( "out", image );
 		int c = waitKey();
@@ -342,3 +484,4 @@ int main(int /*argc*/, char** /*argv*/)
 	delete[] cstr;
 	return 0;
 }
+
