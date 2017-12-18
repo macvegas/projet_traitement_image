@@ -136,7 +136,7 @@ static void findSquares(const Mat& image, vector<vector<Point> >& squares)
 
 
 // the function draws all the squares in the image
-static void drawSquares(Mat& image, const vector<vector<Point> >& squares)
+static void drawSquares(Mat& image, const vector<vector<Point> >& squares, cv::Scalar color)
 {
 	for (size_t i = 0; i < squares.size(); i++)
 	{
@@ -145,7 +145,7 @@ static void drawSquares(Mat& image, const vector<vector<Point> >& squares)
 		int n = (int)squares[i].size();
 		//dont detect the border
 		if (p->x > 3 && p->y > 3)
-			polylines(image, &p, &n, 1, true, Scalar(0, 255, 0), 3, LINE_AA);
+			polylines(image, &p, &n, 1, true, color, 3, LINE_AA);
 	}
 
 	imshow(wndname, image);
@@ -153,15 +153,16 @@ static void drawSquares(Mat& image, const vector<vector<Point> >& squares)
 
 typedef vector<Point> square_t;
 
-
+// returns true if pointA < pointB
+// orders points by row first, then column
 bool compare_points(Point& pointA, Point& pointB, float proximity_tolerance) {
-	if (pointA.x < pointB.x - proximity_tolerance) return true;
-	if (pointA.x > pointB.x + proximity_tolerance) return false;
 	if (pointA.y < pointB.y - proximity_tolerance) return true;
+	if (pointA.y > pointB.y + proximity_tolerance) return false;
+	if (pointA.x < pointB.x - proximity_tolerance) return true;
 	return false;
 }
 
-
+// returns true if the upper left corner of a is < ulc of b
 bool compare_square_t(square_t& a, square_t& b) {
 	Point pointA = a[0], pointB = b[0];
 	return compare_points(pointA, pointB, 50);
@@ -171,7 +172,7 @@ int upperLeft(square_t& sq) {
 	int idx = 0;
 	Point min = sq[0];
 	for (int i = 1; i < sq.size(); i++) {
-		if (sq[i].x < min.x && abs(sq[i].y - min.y) < 5 ) {
+		if (sq[i].x <= min.x && abs(sq[i].y - min.y) < 20 ) {
 			min = sq[i];
 			idx = i;
 		}
@@ -179,18 +180,108 @@ int upperLeft(square_t& sq) {
 	return idx;
 }
 
-bool squaresOverlap(square_t& a, square_t& b, float proximity_tolerance) {
+
+void printSquares(vector<square_t>& squares, string filename) {
+	ofstream myfile2;
+	myfile2.open("C:/Users/sbeaulie/Desktop/" + filename);
+
+	//Le rotate ne marchait pas
+	for (square_t& sq : squares) {
+		for (int i = 0; i < sq.size(); i++) {
+			myfile2 << sq[i] << endl;
+		}
+		myfile2 << endl;
+	}
+
+	myfile2.close();
+}
+
+void filterBySize(vector<square_t>& in, vector<square_t>& out) {
+	
+	for (int i = 0; i < in.size(); i++)
+	{
+		//def des points
+		Point p1 = in[i][0];
+		Point p2 = in[i][1];
+		Point p3 = in[i][2];
+		Point p4 = in[i][3];
+
+		//calcul de taille du carré
+		int distancex = (p2.x - p1.x) ^ 2;
+		int distancey = (p2.y - p1.y) ^ 2;
+
+		double width = sqrt(abs(distancex - distancey));
+
+		if (width > 15.5 && width<17) {
+			vector<Point> points;
+			points.push_back(p1);
+			points.push_back(p2);
+			points.push_back(p3);
+			points.push_back(p4);
+			out.push_back(points);
+		}
+	}
+}
+
+// rotate each square so that the upper left corner is the first point
+void rotateSquares(vector<square_t>& squaresBis) {
+	for (square_t& sq : squaresBis) {
+		int mouv = upperLeft(sq);
+		vector<Point> inter = sq;
+		sq[(0 + mouv) % 4] = inter[0];
+		sq[(1 + mouv) % 4] = inter[1];
+		sq[(2 + mouv) % 4] = inter[2];
+		sq[(3 + mouv) % 4] = inter[3];
+	}
+}
+
+
+bool squaresOverlap(square_t& a, square_t& b, float tolX, float tolY) {
 	Point pointA = a[0], pointB = b[0];
 	return abs(pointB.x - pointA.x) < 160 && abs(pointB.y - pointA.y) < 320;
-	/*
-	bool proxX = (pointB.x > pointA.x - proximity_tolerance && pointB.x < pointA.x + proximity_tolerance);
-	bool proxY = (pointB.y > pointA.y - proximity_tolerance && pointB.y < pointA.y + proximity_tolerance);
-	return proxX && proxY;
-*/}
+}
+
+void filterOverlappingSquares(vector<square_t>& in, vector<square_t>& out, float tolX, float tolY) {
+	std::sort(in.begin(), in.end(), compare_square_t);
+
+	for (auto sq : in) {
+		if (out.size() == 0
+			|| !squaresOverlap(out[out.size() - 1], sq, tolX, tolY)) {
+			out.push_back(sq);
+		}
+	}
+}
+
+
+bool areSameRow(square_t a, square_t b, float tolY) {
+	return std::abs(a[0].y - b[0].y) < tolY;
+}
+
+vector<vector<square_t>> groupByRow(vector<square_t>& squares) {
+	//Trier les carrés par lignes
+	vector<vector<square_t>> lignes;
+
+	std::sort(squares.begin(), squares.end(), compare_square_t);
+
+	vector<square_t> currentRow;
+
+	currentRow.push_back(squares[0]);
+	for (int i = 1; i < squares.size(); i++) {
+		cout << "i: " << i << endl;
+		if (!areSameRow(squares[i], squares[i - 1], 150)) {
+			cout << "changeRow " << i << endl;
+			lignes.push_back(currentRow);
+			currentRow = vector<square_t>();
+		}
+		currentRow.push_back(squares[i]);
+	}
+	return lignes;
+}
+
 
 int main(int /*argc*/, char** /*argv*/)
 {
-	const string numero = "03003";
+	const string numero = "00104";
 	const string imgPath = "c:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images";
 	string alt = imgPath + "/" + numero + ".png";
 
@@ -216,51 +307,13 @@ int main(int /*argc*/, char** /*argv*/)
 	
 
 		vector<square_t> squaresBis;
-		for (int i = 0; i < squares.size(); i++)
-		{
-			//def des points
-			Point p1 = squares[i][0];
-			Point p2= squares[i][1];
-			Point p3 = squares[i][2];
-			Point p4 = squares[i][3];
-
-			//calcul de taille du carré
-			int distancex = (p2.x - p1.x ) ^ 2;
-			int distancey = (p2.y - p1.y) ^ 2;
-
-			double calcdistance = sqrt(abs(distancex - distancey));
-			
-
-			if (calcdistance > 15.5 && calcdistance<17) {
-				vector<Point> points;
-				points.push_back(p1);
-				points.push_back(p2);
-				points.push_back(p3);
-				points.push_back(p4);
-				squaresBis.push_back(points);
-			}
-		}
-
-		ofstream myfile;
-		myfile.open("C:/Users/sbeaulie/Desktop/example.txt");
-		for (auto sq : squaresBis) {
-			myfile << upperLeft(sq) << " " << sq << endl << endl;
-		}
-		myfile.close();
-
-		for (auto sq : squaresBis) {
-			std::rotate(sq.begin(), sq.begin() + upperLeft(sq), sq.end());
-		}
-
-		std::sort(squaresBis.begin(), squaresBis.end(), compare_square_t);
+		filterBySize(squares, squaresBis);
+		rotateSquares(squaresBis);
 
 		vector<square_t> filtered;
-		for (auto sq : squaresBis) {
-			if (filtered.size() == 0 || !squaresOverlap(filtered[filtered.size() -1], sq, 150)) {
-				filtered.push_back(sq);
-			}
-		}
-		/*
+		filterOverlappingSquares(squaresBis, filtered, 160, 320);
+
+		
 		ofstream myfile;
 		myfile.open("C:/Users/sbeaulie/Desktop/example.txt");
 		for (int i = 0; i < filtered.size();i++) {
@@ -269,55 +322,16 @@ int main(int /*argc*/, char** /*argv*/)
 		}
 		myfile.close();
 
-		*/
+	
 
 		cout << filtered.size()<< endl;
 
-		drawSquares(image, filtered);
-		/*
-		//Trier les carrés par lignes 
-		vector<vector<Point> > Ligne1;
-		vector<vector<Point> > Ligne2;
-		vector<vector<Point> > Ligne3;
-		vector<vector<Point> > Ligne4;
-		vector<vector<Point> > Ligne5;
-		vector<vector<Point> > Ligne6;
-		vector<vector<Point> > Ligne7;
+		//drawSquares(image, filtered);
+		
+		auto lignes = groupByRow(filtered);
 
-		int nbLigne = 7;
-		int tailleLigne = 5;
-		for (int i = 0; i < nbLigne; i++)
-		{
-			
-			for (int k = 0; k < 5; k++) {
-				//def des points
-				Point p1 = filtered[(i*tailleLigne) +k][0];
-				Point p2 = filtered[(i*tailleLigne) +k][1];
-				Point p3 = filtered[(i*tailleLigne) +k][2];
-				Point p4 = filtered[(i*tailleLigne) +k][3];
-
-				vector<Point> points;
-				points.push_back(p1);
-				points.push_back(p2);
-				points.push_back(p3);
-				points.push_back(p4);
-
-				switch (i) {
-				case 0: Ligne1.push_back(points); break;
-				case 1: Ligne2.push_back(points); break;
-				case 2: Ligne3.push_back(points); break;
-				case 3: Ligne4.push_back(points); break;
-				case 4: Ligne5.push_back(points); break;
-				case 5: Ligne6.push_back(points); break;
-				case 6: Ligne7.push_back(points); break;
-
-				}
-			}
-		}
-
-		drawSquares(image, Ligne2);
-
-		*/
+		drawSquares(image, lignes[3], Scalar(0, 255, 0));
+		
 		
 
 		//imwrite( "out", image );
