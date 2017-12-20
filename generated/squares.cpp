@@ -12,9 +12,10 @@
 #include <string>
 #include <cstdio>
 #include <numeric>
+#include <regex>
 #define GET_NAME(variable) (#variable)
 
-using namespace cv;
+
 using namespace std;
 
 static void help()
@@ -36,7 +37,7 @@ const char* wndname = "Square Detection Demo";
 // helper function:
 // finds a cosine of angle between vectors
 // from pt0->pt1 and from pt0->pt2
-static double angle(Point pt1, Point pt2, Point pt0)
+static double angle(cv::Point pt1, cv::Point pt2, cv::Point pt0)
 {
 	double dx1 = pt1.x - pt0.x;
 	double dy1 = pt1.y - pt0.y;
@@ -47,11 +48,11 @@ static double angle(Point pt1, Point pt2, Point pt0)
 
 // returns sequence of squares detected on the image.
 // the sequence is stored in the specified memory storage
-static void findSquares(const Mat& image, vector<vector<Point> >& squares)
+static void findSquares(const cv::Mat& image, vector<vector<cv::Point> >& squares)
 {
 	squares.clear();
 
-	//s    Mat pyr, timg, gray0(image.size(), CV_8U), gray;
+	//s    cv::Mat pyr, timg, gray0(image.size(), CV_8U), gray;
 
 	// down-scale and upscale the image to filter out the noise
 	//pyrDown(image, pyr, Size(image.cols/2, image.rows/2));
@@ -60,11 +61,11 @@ static void findSquares(const Mat& image, vector<vector<Point> >& squares)
 
 	// blur will enhance edge detection
 	
-	Mat timg(image);
+	cv::Mat timg(image);
 	//medianBlur(image, timg, 9);
-	Mat gray0(timg.size(), CV_8U), gray;
+	cv::Mat gray0(timg.size(), CV_8U), gray;
 	
-	vector<vector<Point> > contours;
+	vector<vector<cv::Point> > contours;
 
 	// find squares in every color plane of the image
 	for (int c = 0; c < 3; c++)
@@ -84,7 +85,7 @@ static void findSquares(const Mat& image, vector<vector<Point> >& squares)
 				Canny(gray0, gray, 5, thresh, 5);
 				// dilate canny output to remove potential
 				// holes between edge segments
-				dilate(gray, gray, Mat(), Point(-1, -1));
+				dilate(gray, gray, cv::Mat(), cv::Point(-1, -1));
 			}
 			else
 			{
@@ -94,16 +95,16 @@ static void findSquares(const Mat& image, vector<vector<Point> >& squares)
 			}
 
 			// find contours and store them all as a list
-			findContours(gray, contours, RETR_LIST, CHAIN_APPROX_SIMPLE);
+			findContours(gray, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
 
-			vector<Point> approx;
+			vector<cv::Point> approx;
 
 			// test each contour
 			for (size_t i = 0; i < contours.size(); i++)
 			{
 				// approximate contour with accuracy proportional
 				// to the contour perimeter
-				approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.02, true);
+				approxPolyDP(cv::Mat(contours[i]), approx, arcLength(cv::Mat(contours[i]), true)*0.02, true);
 
 				// square contours should have 4 vertices after approximation
 				// relatively large area (to filter out noisy contours)
@@ -112,8 +113,8 @@ static void findSquares(const Mat& image, vector<vector<Point> >& squares)
 				// area may be positive or negative - in accordance with the
 				// contour orientation
 				if (approx.size() == 4 &&
-					fabs(contourArea(Mat(approx))) > 1000 &&
-					isContourConvex(Mat(approx)))
+					fabs(contourArea(cv::Mat(approx))) > 1000 &&
+					isContourConvex(cv::Mat(approx)))
 				{
 					double maxCosine = 0;
 
@@ -137,26 +138,26 @@ static void findSquares(const Mat& image, vector<vector<Point> >& squares)
 
 
 // the function draws all the squares in the image
-static void drawSquares(Mat& image, const vector<vector<Point> >& squares, cv::Scalar color)
+static void drawSquares(cv::Mat& image, const vector<vector<cv::Point> >& squares, cv::Scalar color)
 {
 	for (size_t i = 0; i < squares.size(); i++)
 	{
-		const Point* p = &squares[i][0];
+		const cv::Point* p = &squares[i][0];
 
 		int n = (int)squares[i].size();
 		//dont detect the border
 		if (p->x > 3 && p->y > 3)
-			polylines(image, &p, &n, 1, true, color, 3, LINE_AA);
+			polylines(image, &p, &n, 1, true, color, 3, cv::LINE_AA);
 	}
 
 	imshow(wndname, image);
 }
 
-typedef vector<Point> square_t;
+typedef vector<cv::Point> square_t;
 
-// returns true if pointA < pointB
+// returns true if cv::PointA < cv::PointB
 // orders points by row first, then column
-bool compare_points(Point& pointA, Point& pointB, float proximity_tolerance) {
+bool compare_points(cv::Point& pointA, cv::Point& pointB, float proximity_tolerance) {
 	if (pointA.y < pointB.y - proximity_tolerance) return true;
 	if (pointA.y > pointB.y + proximity_tolerance) return false;
 	if (pointA.x < pointB.x - proximity_tolerance) return true;
@@ -165,13 +166,13 @@ bool compare_points(Point& pointA, Point& pointB, float proximity_tolerance) {
 
 // returns true if the upper left corner of a is < ulc of b
 bool compare_square_t(square_t& a, square_t& b) {
-	Point pointA = a[0], pointB = b[0];
+	cv::Point pointA = a[0], pointB = b[0];
 	return compare_points(pointA, pointB, 50);
 }
 
 int upperLeft(square_t& sq) {
 	int idx = 0;
-	Point min = sq[0];
+	cv::Point min = sq[0];
 	for (int i = 1; i < sq.size(); i++) {
 		if (sq[i].x <= min.x && abs(sq[i].y - min.y) < 20 ) {
 			min = sq[i];
@@ -202,10 +203,10 @@ void filterBySize(vector<square_t>& in, vector<square_t>& out) {
 	for (int i = 0; i < in.size(); i++)
 	{
 		//def des points
-		Point p1 = in[i][0];
-		Point p2 = in[i][1];
-		Point p3 = in[i][2];
-		Point p4 = in[i][3];
+		cv::Point p1 = in[i][0];
+		cv::Point p2 = in[i][1];
+		cv::Point p3 = in[i][2];
+		cv::Point p4 = in[i][3];
 
 		//calcul de taille du carré
 		int distancex = (p2.x - p1.x) ^ 2;
@@ -214,7 +215,7 @@ void filterBySize(vector<square_t>& in, vector<square_t>& out) {
 		double width = sqrt(abs(distancex - distancey));
 
 		if (width > 15.5 && width<17) {
-			vector<Point> points;
+			vector<cv::Point> points;
 			points.push_back(p1);
 			points.push_back(p2);
 			points.push_back(p3);
@@ -224,11 +225,11 @@ void filterBySize(vector<square_t>& in, vector<square_t>& out) {
 	}
 }
 
-// rotate each square so that the upper left corner is the first point
+// rotate each square so that the upper left corner is the first cv::Point
 void rotateSquares(vector<square_t>& squaresBis) {
 	for (square_t& sq : squaresBis) {
 		int mouv = upperLeft(sq);
-		vector<Point> inter = sq;
+		vector<cv::Point> inter = sq;
 		sq[(0 + mouv) % 4] = inter[0];
 		sq[(1 + mouv) % 4] = inter[1];
 		sq[(2 + mouv) % 4] = inter[2];
@@ -238,7 +239,7 @@ void rotateSquares(vector<square_t>& squaresBis) {
 
 
 bool squaresOverlap(square_t& a, square_t& b, float tolX, float tolY) {
-	Point pointA = a[0], pointB = b[0];
+	cv::Point pointA = a[0], pointB = b[0];
 	return abs(pointB.x - pointA.x) < 160 && abs(pointB.y - pointA.y) < 320;
 }
 
@@ -268,9 +269,7 @@ vector<vector<square_t>> groupByRow(vector<square_t>& squares) {
 
 	currentRow.push_back(squares[0]);
 	for (int i = 1; i < squares.size(); i++) {
-		cout << "i: " << i << endl;
 		if (!areSameRow(squares[i], squares[i - 1], 160)) {
-			cout << "changeRow " << i << endl;
 			lignes.push_back(currentRow);
 			currentRow = vector<square_t>();
 		}
@@ -283,82 +282,86 @@ vector<vector<square_t>> groupByRow(vector<square_t>& squares) {
 
 
 
-//charge la base de template
-static vector<Mat> base;
+//charge la base de template // TODO clean that up
+static vector<cv::Mat> base;
 
 string path_template = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/accident.png";
-Mat accident = imread(path_template);
+cv::Mat accident = cv::imread(path_template);
 
 string path_template2 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/bomb.png";
-Mat bomb = imread(path_template2);
+cv::Mat bomb = cv::imread(path_template2);
 
 string path_template3 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/car.png";
-Mat car = imread(path_template3);
+cv::Mat car = cv::imread(path_template3);
 
 string path_template4 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/casualty.png";
-Mat casualty = imread(path_template4);
+cv::Mat casualty = cv::imread(path_template4);
 
 string path_template5 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/electricity.png";
-Mat electricity = imread(path_template5);
+cv::Mat electricity = cv::imread(path_template5);
 
 string path_template6 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/fire.png";
-Mat fire = imread(path_template6);
+cv::Mat fire = cv::imread(path_template6);
 
 string path_template7 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/fireBrigade.png";
-Mat fireBrigade = imread(path_template7);
+cv::Mat fireBrigade = cv::imread(path_template7);
 
 string path_template8 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/flood.png";
-Mat flood = imread(path_template8);
+cv::Mat flood = cv::imread(path_template8);
 
 string path_template9 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/gas.png";
-Mat gas = imread(path_template9);
+cv::Mat gas = cv::imread(path_template9);
 
 string path_template10 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/injury.png";
-Mat injury = imread(path_template10);
+cv::Mat injury = cv::imread(path_template10);
 
 string path_template11 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/paramedics.png";
-Mat paramedics = imread(path_template11);
+cv::Mat paramedics = cv::imread(path_template11);
 
 string path_template12 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/person.png";
-Mat person = imread(path_template12);
+cv::Mat person = cv::imread(path_template12);
 
 string path_template13 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/police.png";
-Mat police = imread(path_template13);
+cv::Mat police = cv::imread(path_template13);
 
 string path_template14 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/roadBlock.png";
-Mat roadBlock = imread(path_template14);
+cv::Mat roadBlock = cv::imread(path_template14);
 
 
 string path_template15 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/small.png";
-Mat small = imread(path_template15);
+cv::Mat small = cv::imread(path_template15);
 
 string path_template16 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/medium.png";
-Mat medium = imread(path_template16);
+cv::Mat medium = cv::imread(path_template16);
 
 string path_template17 = "C:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images/templates/large.png";
-Mat large = imread(path_template17);
+cv::Mat large = cv::imread(path_template17);
 
 
-string whatSymbols(Mat source) {
+string* whatSymbols(cv::Mat source) {
 
 	double maxResult=0.0;
 	string symbolName;
 	int indice = 0;
+	cv::Mat bestResult;
 	// Symbole le plus ressemblant
 	for (int i = 0; i < base.size();i++) {
-		Mat result;
+		cv::Mat result;
 		matchTemplate(source, base[i], result, CV_TM_CCOEFF_NORMED);
 		//permet la récupération du point d'intérêt (haut a gauche) le plus probable
 		double min, max;
-		Point locationMin;
-		Point locationMax;
+		cv::Point locationMin;
+		cv::Point locationMax;
 		minMaxLoc(result, &min, &max, &locationMin, &locationMax);
 
 		if (max>maxResult) {
 			maxResult = max;
 			indice = i;
+			bestResult = result;
 		}
 	}
+//	cv::namedWindow("res", cv::WINDOW_NORMAL);
+//	cv::imshow("res", bestResult);
 
 
 	switch (indice) {
@@ -385,8 +388,8 @@ string whatSymbols(Mat source) {
 	int couleur= 0;
 	// Symbole le plus ressemblant
 	for (int i = 0; i < 3; i++) {
-		Mat result;
-		Mat choix;
+		cv::Mat result;
+		cv::Mat choix;
 		if (i == 0) {
 			choix = small;
 		}
@@ -400,10 +403,9 @@ string whatSymbols(Mat source) {
 
 		//permet la récupération du point d'intérêt (haut a gauche) le plus probable
 		double min, max;
-		Point locationMin;
-		Point locationMax;
+		cv::Point locationMin;
+		cv::Point locationMax;
 		minMaxLoc(result, &min, &max, &locationMin, &locationMax);
-		cout << max << endl;
 		if (max>maxResult1) {
 			maxResult1 = max;
 			couleur= i;
@@ -416,15 +418,41 @@ string whatSymbols(Mat source) {
 
 	}
 	
-	return symbolName + symbolTaille;
+	return new string[2]{ symbolName, symbolTaille };
 
+}
+
+
+string getFileName(string numRow, string numCol, string numScripteur, string numPage, string templateName, string templateSize) {
+	return templateName + "_" + numScripteur + "_" + numPage + "_" + numRow + "_" + numCol;
+}
+
+
+string* parseInputName(string filePath) {
+	std::regex rgx(".*/w(\\d\\d\\d)-scans/(.+).png");
+	std::smatch matches;
+
+	if (std::regex_match(filePath, matches, rgx)) {
+		return new string[2]{ matches[1], matches[2] };
+	} else {
+		throw "Incorrect input filename\n";
+	}
 }
 
 int main(int /*argc*/, char** /*argv*/)
 {
-	const string numero = "00220";
-	const string imgPath = "c:/Users/sbeaulie/Desktop/Projet OpenCV-CMake/images";
-	string alt = imgPath + "/" + numero + ".png";
+
+
+	const string imgPath = "W:/p/p12/5info/irfBD/NicIcon/w003-scans/00303.png";
+
+	string* parsed = parseInputName(imgPath); // TODO parse parameters
+	string scripterNumber = parsed[0];
+	string pageNumber = parsed[1];
+
+	string ComputedImagesPrefix = "C:/Users/sbeaulie/Desktop/ComputedImages/";
+
+
+
 
 	//Remplissage du vecteur base
 	base.push_back(accident);
@@ -442,18 +470,18 @@ int main(int /*argc*/, char** /*argv*/)
 	base.push_back(police);
 	base.push_back(roadBlock);
 
-	char * cstr = new char[alt.length() + 1];
-	std::strcpy(cstr, alt.c_str());
+	char * cstr = new char[imgPath.length() + 1];
+	std::strcpy(cstr, imgPath.c_str());
 
-	static const char* names[] = { cstr ,0 };
+	static const char* names[] = { cstr , 0 };
 	
 	help();
-	namedWindow(wndname, WINDOW_NORMAL);
+	cv::namedWindow(wndname, cv::WINDOW_NORMAL);
 	vector<square_t> squares;
 
 	for (int i = 0; names[i] != 0; i++)
 	{
-		Mat image = imread(names[i], 1);
+		cv::Mat image = cv::imread(names[i], 1);
 		if (image.empty())
 		{
 			cout << "Couldn't load " << names[i] << endl;
@@ -470,48 +498,57 @@ int main(int /*argc*/, char** /*argv*/)
 		vector<square_t> filtered;
 		filterOverlappingSquares(squaresBis, filtered, 160, 320);
 
-		
-		ofstream myfile;
-		myfile.open("C:/Users/sbeaulie/Desktop/example.txt");
-		for (int i = 0; i < filtered.size();i++) {
-			if (i % 7 == 0) myfile << endl;
-			myfile << filtered[i] << endl;
-		}
-		myfile.close();
-
-	
-
 		cout << filtered.size()<< endl;
 
 		//drawSquares(image, filtered);
 		
 		auto lignes = groupByRow(filtered);
 
-		drawSquares(image, lignes[2], Scalar(0, 255, 0));
+		drawSquares(image, lignes[2], cv::Scalar(0, 255, 0));
 		
 
 		for (int k = 0; k < lignes.size(); k++) {
 			//Select interest zone 
-			Mat source = imread(alt);
-			Mat subImage(source, Rect(0, lignes[k][0][0].y, 600, 350));
+			cv::Mat source = cv::imread(imgPath);
+			cv::Mat subImage(source, cv::Rect(0, lignes[k][0][0].y, 600, 350));
 
-			string name = whatSymbols(subImage);
-			cout << name << numero << endl;
+			string* templateAndSize = whatSymbols(subImage);
 			string numberRow = to_string(k+1);
 
 			for (int u = 0; u < lignes[k].size(); u++) {
-				string numberColunm = to_string(u+1);
-				//Enregistrer chaqueCarre
-				//Il faudrait transformer le vecteur de point en mat 
-				//Peutêtre calculer un barycentre puis créer une image avec le constructeur utilisé ci-dessus
-				//imwrite( "out", lignes[k][u]);
+				string numberColumn = to_string(u+1);
+
+				// Cropped square
+				cv::Mat cropped(source, cv::Rect(lignes[k][u][0], lignes[k][u][2]));
+
+				auto filename = getFileName(numberRow, numberColumn, scripterNumber, pageNumber, templateAndSize[0], templateAndSize[1]);
+
+				cout << ComputedImagesPrefix + filename + ".png" << endl;
+
+				cv::imwrite(ComputedImagesPrefix + filename + ".png", cropped);
+
+				//String pour .txt
+
+
+				ofstream metadataFile;
+				metadataFile.open(ComputedImagesPrefix + filename + ".txt");
+				metadataFile << "# 2017 Groupe Beaulieu Fournier Saulnier\n"
+					<< "label " << templateAndSize[0] << endl
+					<< "form " << scripterNumber + pageNumber << endl
+					<< "scripter " << scripterNumber << endl
+					<< "page " << pageNumber << endl
+					<< "row " << numberRow << endl
+					<< "column " << numberColumn << endl
+					<< "size " << templateAndSize[1] << endl;
+
+
+				metadataFile.close();
 			}
-			
 		}
 		
 
 		
-		int c = waitKey();
+		int c = cv::waitKey();
 		if ((char)c == 27)
 			break;
 	}
