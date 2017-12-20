@@ -13,19 +13,19 @@ Ensuite, pour chaque carré de chaque ligne, nous enregistrons la sous image ave
 
 
 ### Instructions pour cloner
-Aller dans le dossier generated
+
+1. Aller dans le dossier generated
 ```
 cd generated
 ```
 
-Lancer la commande cmake configurant le projet pour Visual Studio 2017 (en mode compatibilité 2015) :
+2. Lancer la commande cmake configurant le projet pour Visual Studio 2017 (en mode compatibilité 2015) :
 ```
 cmake -G "Visual Studio 15 2017 Win64" -T "v140" .. -DOpenCV_DIR="C:\Program Files\OpenCV_3.3.1\build"
 ```
 
-Ouvrir le projet dans Visual Studio (cliquer sur opencv_test.sln)
+3. Ouvrir le projet dans Visual Studio (cliquer sur opencv_test.sln)
 
-Choisir "Aucune mise à niveau" lors de l'ouverture du projet sous Visual Studio
-Penser à sélectionner ce projet opencv_test comme projet de démarrage
-Adapter le chemin vers l'image de test dans le main
-Compiler et tester
+4. Choisir "Aucune mise à niveau" lors de l'ouverture du projet sous Visual Studio. Penser à sélectionner ce projet opencv_test comme projet de démarrage.
+5. Adapter le chemin vers l'image de test dans le main
+6. Compiler et tester
