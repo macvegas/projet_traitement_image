@@ -430,6 +430,7 @@ string getFileName(string numRow, string numCol, string numScripteur, string num
 
 string* parseInputName(string filePath) {
 	std::regex rgx(".*/w(\\d\\d\\d)-scans/(.+).png");
+	//std::regex rgx(".*/s(\\d\\d)_(.+).png");
 	std::smatch matches;
 
 	if (std::regex_match(filePath, matches, rgx)) {
@@ -443,7 +444,7 @@ int main(int /*argc*/, char** /*argv*/)
 {
 
 
-	const string imgPath = "W:/p/p12/5info/irfBD/NicIcon/w003-scans/00303.png";
+	const string imgPath = "W:/p/p12/5info/irfBD/NicIcon/w003-scans/00305.png";
 
 	string* parsed = parseInputName(imgPath); // TODO parse parameters
 	string scripterNumber = parsed[0];
